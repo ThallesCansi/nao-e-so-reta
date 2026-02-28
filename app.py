@@ -13,7 +13,7 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 LatLon = Tuple[float, float]  # (lat, lon)
-XY = Tuple[float, float]      # (x, y) em metros (CRS projetado)
+XY = Tuple[float, float]  # (x, y) em metros (CRS projetado)
 
 
 @dataclass(frozen=True)
@@ -40,6 +40,7 @@ class AppConfig:
 # Utilidades matemáticas
 # ----------------------------
 
+
 def minkowski_distance(dx: float, dy: float, p: float) -> float:
     """Distância Minkowski no plano (dx, dy >= 0)."""
     if p <= 0:
@@ -47,7 +48,9 @@ def minkowski_distance(dx: float, dy: float, p: float) -> float:
     return (dx**p + dy**p) ** (1.0 / p)
 
 
-def superellipse_points_xy(center_xy: XY, radius: float, p: float, n_points: int) -> List[XY]:
+def superellipse_points_xy(
+    center_xy: XY, radius: float, p: float, n_points: int
+) -> List[XY]:
     """Bola Minkowski no plano projetado: |x|^p + |y|^p = R^p."""
     cx, cy = center_xy
     if radius <= 0:
@@ -91,7 +94,9 @@ def visual_minkowski_curve_xy(a_xy: XY, b_xy: XY, p: float, n_points: int) -> Li
     return list(zip(xs.tolist(), ys.tolist()))
 
 
-def project_xy_to_latlon(points_xy: List[XY], transformer: pyproj.Transformer) -> List[LatLon]:
+def project_xy_to_latlon(
+    points_xy: List[XY], transformer: pyproj.Transformer
+) -> List[LatLon]:
     """Converte (x,y) projetado -> (lat,lon) para desenhar no Folium."""
     out: List[LatLon] = []
     for x, y in points_xy:
@@ -103,6 +108,7 @@ def project_xy_to_latlon(points_xy: List[XY], transformer: pyproj.Transformer) -
 # ----------------------------
 # Dados (OSMnx) e projeção
 # ----------------------------
+
 
 def _build_transformer_from_projected_graph(G_proj) -> pyproj.Transformer:
     crs_proj = pyproj.CRS.from_user_input(G_proj.graph["crs"])
@@ -139,7 +145,17 @@ def load_graph(place_name: str, network_type: str, graph_path: str):
 
 def nearest_node(G, point: LatLon) -> int:
     lat, lon = point
-    return int(ox.distance.nearest_nodes(G, X=lon, Y=lat))
+    try:
+        return int(ox.distance.nearest_nodes(G, X=lon, Y=lat))
+    except ImportError:
+        # Fallback para ambientes sem dependências opcionais do OSMnx
+        # (ex.: scipy/sklearn ausentes no deploy).
+        nearest = min(
+            G.nodes,
+            key=lambda n: (float(G.nodes[n]["x"]) - lon) ** 2
+            + (float(G.nodes[n]["y"]) - lat) ** 2,
+        )
+        return int(nearest)
 
 
 def node_xy(G_proj, node: int) -> XY:
@@ -149,6 +165,7 @@ def node_xy(G_proj, node: int) -> XY:
 # ----------------------------
 # Estado e cliques
 # ----------------------------
+
 
 def ensure_state():
     if "markers" not in st.session_state:
@@ -190,7 +207,10 @@ def handle_click(output: Dict) -> bool:
 # Cálculos e renderização
 # ----------------------------
 
-def compute_metrics(G, G_proj, origin: LatLon, dest: LatLon, p: float) -> Dict[str, Optional[float]]:
+
+def compute_metrics(
+    G, G_proj, origin: LatLon, dest: LatLon, p: float
+) -> Dict[str, Optional[float]]:
     """Calcula distância real (ruas) e distâncias Lp no plano projetado. Tudo em metros."""
     u = nearest_node(G, origin)
     v = nearest_node(G, dest)
@@ -230,7 +250,9 @@ def add_markers_to_map(m: folium.Map, markers: List[LatLon]):
     for i, coords in enumerate(markers):
         color = "green" if i == 0 else "red"
         label = "Origem" if i == 0 else "Destino"
-        folium.Marker(location=coords, icon=folium.Icon(color=color), tooltip=label).add_to(m)
+        folium.Marker(
+            location=coords, icon=folium.Icon(color=color), tooltip=label
+        ).add_to(m)
 
 
 def add_routes_and_theory_to_map(
@@ -254,7 +276,13 @@ def add_routes_and_theory_to_map(
 
     # Linhas teóricas diretas (em lat/lon)
     if show_euclid:
-        folium.PolyLine([origin, dest], color="green", weight=2, dash_array="5, 10", tooltip="Euclidiana (L2)").add_to(m)
+        folium.PolyLine(
+            [origin, dest],
+            color="green",
+            weight=2,
+            dash_array="5, 10",
+            tooltip="Euclidiana (L2)",
+        ).add_to(m)
 
     if show_manhattan:
         corner = (origin[0], dest[1])
@@ -275,7 +303,9 @@ def add_routes_and_theory_to_map(
         R = minkowski_distance(abs(a_xy[0] - b_xy[0]), abs(a_xy[1] - b_xy[1]), p)
 
         if show_minkowski_ball:
-            ball_xy = superellipse_points_xy(a_xy, R, p=p, n_points=cfg.n_superellipse_points)
+            ball_xy = superellipse_points_xy(
+                a_xy, R, p=p, n_points=cfg.n_superellipse_points
+            )
             ball_latlon = project_xy_to_latlon(ball_xy, transformer)
             folium.Polygon(
                 locations=ball_latlon,
@@ -287,7 +317,9 @@ def add_routes_and_theory_to_map(
             ).add_to(m)
 
         if show_minkowski_curve:
-            curve_xy = visual_minkowski_curve_xy(a_xy, b_xy, p=p, n_points=cfg.n_visual_curve_points)
+            curve_xy = visual_minkowski_curve_xy(
+                a_xy, b_xy, p=p, n_points=cfg.n_visual_curve_points
+            )
             curve_latlon = project_xy_to_latlon(curve_xy, transformer)
             folium.PolyLine(
                 locations=curve_latlon,
@@ -301,7 +333,13 @@ def add_routes_and_theory_to_map(
     try:
         route = nx.shortest_path(G, u, v, weight="length")
         route_latlon = [(G.nodes[n]["y"], G.nodes[n]["x"]) for n in route]
-        folium.PolyLine(route_latlon, color="blue", weight=5, opacity=0.75, tooltip="Distância real (ruas)").add_to(m)
+        folium.PolyLine(
+            route_latlon,
+            color="blue",
+            weight=5,
+            opacity=0.75,
+            tooltip="Distância real (ruas)",
+        ).add_to(m)
         return route_latlon, None
     except nx.NetworkXNoPath:
         return None, "Não há caminho viável entre estes pontos (grafo desconectado)."
@@ -324,19 +362,35 @@ def render_metrics_panel(metrics: Dict[str, Optional[float]], p: float):
 
     with col2:
         err = safe_percent_error(d_euclid, dist_real)
-        st.metric("Euclidiana (L2)", f"{d_euclid:.0f} m", "N/A" if err is None else f"{err:.1f}%")
+        st.metric(
+            "Euclidiana (L2)",
+            f"{d_euclid:.0f} m",
+            "N/A" if err is None else f"{err:.1f}%",
+        )
 
     with col3:
         err = safe_percent_error(d_manhat, dist_real)
-        st.metric("Manhattan (L1)", f"{d_manhat:.0f} m", "N/A" if err is None else f"{err:.1f}%")
+        st.metric(
+            "Manhattan (L1)",
+            f"{d_manhat:.0f} m",
+            "N/A" if err is None else f"{err:.1f}%",
+        )
 
     with col4:
         err = safe_percent_error(d_mink, dist_real)
-        st.metric(f"Minkowski (p={p:.2f})", f"{d_mink:.0f} m", "N/A" if err is None else f"{err:.1f}%")
+        st.metric(
+            f"Minkowski (p={p:.2f})",
+            f"{d_mink:.0f} m",
+            "N/A" if err is None else f"{err:.1f}%",
+        )
 
     with col5:
         err = safe_percent_error(d_cheby, dist_real)
-        st.metric("Chebyshev (L∞)", f"{d_cheby:.0f} m", "N/A" if err is None else f"{err:.1f}%")
+        st.metric(
+            "Chebyshev (L∞)",
+            f"{d_cheby:.0f} m",
+            "N/A" if err is None else f"{err:.1f}%",
+        )
 
     if dist_real is not None and d_euclid > 0:
         st.caption(f"Tortuosidade (ruas / L2): {dist_real / d_euclid:.2f}")
@@ -345,6 +399,7 @@ def render_metrics_panel(metrics: Dict[str, Optional[float]], p: float):
 # ----------------------------
 # App (Streamlit)
 # ----------------------------
+
 
 def main():
     cfg = AppConfig()
@@ -399,8 +454,14 @@ def main():
                     "Se não existir, o app baixa do OpenStreetMap usando o 'Local'."
                 ),
             )
-            place_name = st.text_input("Local (consulta ao OSM)", value=cfg.default_place_name)
-            network_type = st.selectbox("Tipo de rede", options=["drive", "walk", "bike"], index=["drive", "walk", "bike"].index(cfg.default_network_type))
+            place_name = st.text_input(
+                "Local (consulta ao OSM)", value=cfg.default_place_name
+            )
+            network_type = st.selectbox(
+                "Tipo de rede",
+                options=["drive", "walk", "bike"],
+                index=["drive", "walk", "bike"].index(cfg.default_network_type),
+            )
 
             if st.button("Recarregar grafo", use_container_width=True):
                 load_graph.clear()  # limpa cache
