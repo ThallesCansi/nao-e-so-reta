@@ -1,0 +1,7 @@
+streamlit>=1.30
+osmnx>=1.8
+networkx>=3.2
+numpy>=1.23
+folium>=0.15
+streamlit-folium>=0.18
+pyproj>=3.6
