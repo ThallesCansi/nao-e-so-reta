@@ -1,6 +1,7 @@
 import math
 import os
 from dataclasses import dataclass
+from html import escape
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -255,6 +256,96 @@ def add_markers_to_map(m: folium.Map, markers: List[LatLon]):
         ).add_to(m)
 
 
+def _legend_item_html(label: str, color: str, dash_array: Optional[str] = None) -> str:
+    dash_css = ""
+    if dash_array:
+        dash_css = f"background-image: repeating-linear-gradient(to right, {color} 0 8px, transparent 8px 14px);"
+
+    if color == "orange":
+        text_color = "#c96f00"
+    elif color == "purple":
+        text_color = "#6a1b9a"
+    else:
+        text_color = color
+
+    line_style = (
+        f"background:{color};"
+        if not dash_array
+        else f"background: transparent; {dash_css}"
+    )
+
+    return (
+        "<div style='display:flex; align-items:center; gap:8px; margin:6px 0;'>"
+        f"<span style='width:22px; height:4px; border-radius:999px; display:inline-block; {line_style}'></span>"
+        f"<span style='font-size:13px; color:#222;'><strong style='color:{text_color};'>{escape(label)}</strong></span>"
+        "</div>"
+    )
+
+
+def _marker_legend_item_html(label: str, color: str) -> str:
+    return (
+        "<div style='display:flex; align-items:center; gap:8px; margin:6px 0;'>"
+        f"<span style='width:12px; height:12px; border-radius:50%; background:{color}; border:1px solid #444; display:inline-block;'></span>"
+        f"<span style='font-size:13px; color:#222;'>{escape(label)}</span>"
+        "</div>"
+    )
+
+
+def add_map_legend(
+    m: folium.Map,
+    markers: List[LatLon],
+    p: float,
+    show_real_route: bool,
+    show_euclid: bool,
+    show_manhattan: bool,
+    show_minkowski_ball: bool,
+    show_minkowski_curve: bool,
+):
+    items: List[str] = []
+
+    if len(markers) >= 1:
+        items.append(_marker_legend_item_html("Origem", "green"))
+    if len(markers) >= 2:
+        items.append(_marker_legend_item_html("Destino", "red"))
+
+    if show_real_route:
+        items.append(_legend_item_html("Distancia real (ruas)", "blue"))
+    if show_euclid:
+        items.append(_legend_item_html("Euclidiana (L2)", "green", dash_array="5, 10"))
+    if show_manhattan:
+        items.append(_legend_item_html("Manhattan (L1, visual)", "red", dash_array="5, 10"))
+    if show_minkowski_ball:
+        items.append(
+            _legend_item_html(f"Fronteira Minkowski (p={p:.2f})", "orange", dash_array="5, 5")
+        )
+    if show_minkowski_curve:
+        items.append(_legend_item_html(f"Curva visual Minkowski (p={p:.2f})", "purple"))
+
+    if not items:
+        return
+
+    legend_html = f"""
+    <div style="
+        position: fixed;
+        bottom: 24px;
+        left: 24px;
+        z-index: 9999;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid #cfcfcf;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+        padding: 12px 14px;
+        min-width: 230px;
+    ">
+        <div style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #111;">
+            Legenda
+        </div>
+        {''.join(items)}
+    </div>
+    """
+    m.get_root().html.add_child(folium.Element(legend_html))
+
+
 def add_routes_and_theory_to_map(
     m: folium.Map,
     G,
@@ -484,6 +575,7 @@ def main():
     add_markers_to_map(m, markers)
 
     route_error = None
+    show_real_route = False
     if len(markers) == 2:
         origin, dest = markers
         _, route_error = add_routes_and_theory_to_map(
@@ -495,6 +587,19 @@ def main():
             dest=dest,
             p=p,
             cfg=cfg,
+            show_euclid=show_euclid,
+            show_manhattan=show_manhattan,
+            show_minkowski_ball=show_minkowski_ball,
+            show_minkowski_curve=show_minkowski_curve,
+        )
+        show_real_route = route_error is None
+
+    if len(markers) == 2:
+        add_map_legend(
+            m=m,
+            markers=markers,
+            p=p,
+            show_real_route=show_real_route,
             show_euclid=show_euclid,
             show_manhattan=show_manhattan,
             show_minkowski_ball=show_minkowski_ball,
