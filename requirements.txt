@@ -6,6 +6,9 @@ pandas>=2.0
 folium>=0.15
 streamlit-folium>=0.18
 pyproj>=3.6
+ipykernel>=7.2.0
+matplotlib>=3.10.9
+scipy>=1.17.1
 
 osmnx
 geopandas

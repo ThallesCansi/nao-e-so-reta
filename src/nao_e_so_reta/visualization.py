@@ -1,17 +1,24 @@
 from __future__ import annotations
 
+import math
 from html import escape
+from pathlib import Path
+from typing import Any
 
 import folium
+import numpy as np
+import pandas as pd
 import pyproj
 
 from nao_e_so_reta.config import LatLon, XY
 from nao_e_so_reta.norms import (
     lp_distance_xy,
     manhattan_polyline_xy,
+    metric_column_from_p,
     superellipse_boundary_xy,
     visual_minkowski_curve_xy,
 )
+from nao_e_so_reta.analysis import best_p_by
 from nao_e_so_reta.projections import points_xy_to_latlon
 
 
@@ -215,3 +222,138 @@ def add_legend(
     </div>
     """
     map_obj.get_root().html.add_child(folium.Element(legend_html))
+
+
+def plot_route(
+    graph: Any,
+    route: list[int],
+    *,
+    filepath: str | Path | None = None,
+    show: bool = True,
+    close: bool = False,
+):
+    """Plota uma rota no grafo usando OSMnx e salva opcionalmente em arquivo."""
+    import osmnx as ox
+
+    fig, ax = ox.plot_graph_route(
+        graph,
+        list(route),
+        node_size=0,
+        route_linewidth=4,
+        show=show,
+        close=close,
+    )
+    if filepath is not None:
+        path = Path(filepath)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, dpi=200, bbox_inches="tight")
+    return fig, ax
+
+
+def latex_label_from_metric_col(metric_col: str) -> str:
+    """Converte nomes de colunas em labels LaTeX para gráficos."""
+    if metric_col == "d_graph_m":
+        return r"$d_G$"
+    if metric_col == metric_column_from_p(math.inf):
+        return r"$d_\infty$"
+    if metric_col.startswith("d_L") and metric_col.endswith("_m"):
+        p_str = metric_col.removeprefix("d_L").removesuffix("_m").replace("_", ".")
+        if p_str == "1":
+            return r"$d_1$"
+        if p_str == "2":
+            return r"$d_2$"
+        return rf"$d_{{{p_str}}}$"
+    return metric_col
+
+
+def plot_metric_scatter(
+    results_df: pd.DataFrame,
+    metric_col: str,
+    *,
+    filepath: str | Path | None = None,
+    alpha: float = 0.25,
+    s: float = 8.0,
+):
+    """Gráfico de dispersão d_métrica versus d_G."""
+    import matplotlib.pyplot as plt
+
+    if metric_col not in results_df.columns:
+        raise ValueError(f"Coluna {metric_col!r} não encontrada.")
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    x = results_df[metric_col]
+    y = results_df["d_graph_m"]
+
+    ax.scatter(x, y, alpha=alpha, s=s)
+    max_val = float(np.nanmax([x.max(), y.max()]))
+    ax.plot([0, max_val], [0, max_val], linestyle="--", linewidth=1, label=r"$y=x$")
+
+    metric_label = latex_label_from_metric_col(metric_col)
+    ax.set_xlabel(rf"{metric_label} $(\mathrm{{m}})$", fontsize=12)
+    ax.set_ylabel(r"$d_G$ $(\mathrm{m})$", fontsize=12)
+    ax.set_title(rf"Comparação entre {metric_label} e $d_G$", fontsize=13)
+    ax.grid(True, alpha=0.3)
+    ax.legend()
+
+    if filepath is not None:
+        path = Path(filepath)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, dpi=200, bbox_inches="tight")
+    return fig, ax
+
+
+def plot_error_by_p(
+    grid_results: pd.DataFrame,
+    *,
+    criterion: str = "MAPE_percent",
+    filepath: str | Path | None = None,
+):
+    """Plota erro em função de p para a busca do melhor p."""
+    import matplotlib.pyplot as plt
+
+    if "p" not in grid_results.columns or criterion not in grid_results.columns:
+        raise ValueError("grid_results precisa conter colunas 'p' e o critério informado.")
+
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.plot(grid_results["p"], grid_results[criterion], linewidth=1.5)
+    ax.set_xlabel("p")
+    ax.set_ylabel(criterion)
+    ax.set_title(f"Erro em função de p ({criterion})")
+    ax.grid(True, alpha=0.3)
+
+    best = best_p_by(grid_results, criterion=criterion)
+    ax.axvline(float(best["p"]), linestyle="--", linewidth=1)
+
+    if filepath is not None:
+        path = Path(filepath)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, dpi=200, bbox_inches="tight")
+    return fig, ax
+
+
+def plot_tortuosity_hist(
+    results_df: pd.DataFrame,
+    *,
+    tortuosity_col: str = "tortuosity_dG_dL2",
+    bins: int = 40,
+    filepath: str | Path | None = None,
+):
+    """Histograma da tortuosidade d_G/d_2."""
+    import matplotlib.pyplot as plt
+
+    if tortuosity_col not in results_df.columns:
+        raise ValueError(f"Coluna {tortuosity_col!r} não encontrada.")
+
+    values = results_df[tortuosity_col].replace([np.inf, -np.inf], np.nan).dropna()
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.hist(values, bins=bins)
+    ax.set_xlabel("Tortuosidade d_G/d_2")
+    ax.set_ylabel("Frequência")
+    ax.set_title("Distribuição da tortuosidade")
+    ax.grid(True, alpha=0.3)
+
+    if filepath is not None:
+        path = Path(filepath)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, dpi=200, bbox_inches="tight")
+    return fig, ax

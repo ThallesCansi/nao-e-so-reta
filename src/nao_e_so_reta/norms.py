@@ -7,6 +7,19 @@ import numpy as np
 
 from nao_e_so_reta.config import XY
 
+DEFAULT_P_VALUES: tuple[float, ...] = (
+    1.0,
+    1.25,
+    1.5,
+    1.54,
+    1.75,
+    2.0,
+    3.0,
+    5.0,
+    10.0,
+    math.inf,
+)
+
 
 def validate_p(p: float) -> float:
     """Valida o parâmetro p de uma norma Lp.
@@ -47,6 +60,21 @@ def named_lp_distances(a: XY, b: XY, p: float) -> dict[str, float]:
         f"Lp / Minkowski (p={p:.2f})": lp_distance_xy(a, b, p),
         "L∞ / Chebyshev": lp_distance_xy(a, b, math.inf),
     }
+
+
+def metric_name_from_p(p: float) -> str:
+    """Nome estável para uma métrica Lp em tabelas e gráficos."""
+    p = validate_p(p)
+    if math.isinf(p):
+        return "Linf"
+    if abs(p - round(p)) < 1e-12:
+        return f"L{int(round(p))}"
+    return "L" + str(p).replace(".", "_")
+
+
+def metric_column_from_p(p: float) -> str:
+    """Nome da coluna de distância, em metros, para um valor de p."""
+    return f"d_{metric_name_from_p(p)}_m"
 
 
 def superellipse_boundary_xy(

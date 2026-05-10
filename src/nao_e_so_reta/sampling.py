@@ -4,6 +4,8 @@ import random
 from typing import Any
 
 import networkx as nx
+import numpy as np
+import pandas as pd
 
 from nao_e_so_reta.config import XY
 from nao_e_so_reta.routing import node_xy
@@ -45,6 +47,46 @@ def sample_node_pairs(
         attempts += 1
 
     return out
+
+
+def sample_vertex_pairs(
+    graph: Any,
+    *,
+    n_pairs: int = 10_000,
+    n_origins: int | None = 250,
+    seed: int = 42,
+) -> pd.DataFrame:
+    """Amostra pares distintos de vértices em um DataFrame origin/target.
+
+    Quando `n_origins` é informado, limita a quantidade de origens distintas
+    para permitir que análises posteriores reutilizem uma execução de Dijkstra
+    por origem.
+    """
+    if n_pairs <= 0:
+        raise ValueError("n_pairs deve ser positivo.")
+
+    nodes = np.array(list(graph.nodes))
+    if len(nodes) < 2:
+        raise ValueError("O grafo precisa ter pelo menos dois vértices.")
+
+    rng = np.random.default_rng(seed)
+    if n_origins is None:
+        origins = rng.choice(nodes, size=n_pairs, replace=True)
+    else:
+        n_origins = int(min(max(1, n_origins), len(nodes), n_pairs))
+        chosen_origins = rng.choice(nodes, size=n_origins, replace=False)
+        counts = np.full(n_origins, n_pairs // n_origins, dtype=int)
+        counts[: n_pairs % n_origins] += 1
+        origins = np.repeat(chosen_origins, counts)
+        rng.shuffle(origins)
+
+    targets = rng.choice(nodes, size=n_pairs, replace=True)
+    conflicts = targets == origins
+    while conflicts.any():
+        targets[conflicts] = rng.choice(nodes, size=int(conflicts.sum()), replace=True)
+        conflicts = targets == origins
+
+    return pd.DataFrame({"origin": origins.astype(object), "target": targets.astype(object)})
 
 
 def build_calibration_pairs(
