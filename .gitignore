@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.env
+.DS_Store
+
+# Dados locais potencialmente grandes
+data/*.graphml
+data/*.gpkg
+data/*.csv
+!data/.gitkeep

@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nao-e-so-reta"
+version = "0.2.0"
+description = "Laboratório de métricas urbanas: redes viárias, normas Lp e distorção métrica."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+  { name = "Projeto Não é só reta" }
+]
+dependencies = [
+  "streamlit>=1.30",
+  "osmnx>=1.8",
+  "networkx>=3.2",
+  "numpy>=1.23",
+  "pandas>=2.0",
+  "folium>=0.15",
+  "streamlit-folium>=0.18",
+  "pyproj>=3.6"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+ignore_missing_imports = true

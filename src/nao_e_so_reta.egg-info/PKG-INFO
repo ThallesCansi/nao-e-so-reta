@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: nao-e-so-reta
+Version: 0.2.0
+Summary: Laboratório de métricas urbanas: redes viárias, normas Lp e distorção métrica.
+Author: Projeto Não é só reta
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: streamlit>=1.30
+Requires-Dist: osmnx>=1.8
+Requires-Dist: networkx>=3.2
+Requires-Dist: numpy>=1.23
+Requires-Dist: pandas>=2.0
+Requires-Dist: folium>=0.15
+Requires-Dist: streamlit-folium>=0.18
+Requires-Dist: pyproj>=3.6
+
 # Não é só reta — Laboratório de Métricas Urbanas
 
 Projeto em **Streamlit + OSMnx + NetworkX** para investigar, de forma matemática e computacional, a diferença entre:
