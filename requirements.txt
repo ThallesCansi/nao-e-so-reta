@@ -6,3 +6,14 @@ pandas>=2.0
 folium>=0.15
 streamlit-folium>=0.18
 pyproj>=3.6
+
+osmnx
+geopandas
+networkx
+pandas
+numpy
+scipy
+matplotlib
+tqdm
+pyproj
+jupyter
