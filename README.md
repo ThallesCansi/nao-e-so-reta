@@ -3,8 +3,8 @@
 Projeto em **Streamlit + OSMnx + NetworkX** para investigar, de forma matemática e computacional, a diferença entre:
 
 - a distância **intrínseca** de uma rede viária, isto é, o menor caminho em um grafo de ruas;
-- distâncias **extrínsecas** no plano projetado, como \(L_1\), \(L_2\), \(L_\infty\) e \(L_p\);
-- índices de **tortuosidade**, **distorção métrica**, erro relativo e calibração empírica do parâmetro \(p\).
+- distâncias **extrínsecas** no plano projetado, como $L_1$, $L_2$, $L_\infty$ e $L_p$;
+- índices de **tortuosidade**, **distorção métrica**, erro relativo e calibração empírica do parâmetro $p$.
 
 A ideia central é mostrar que, em uma cidade, “distância” não é apenas uma reta entre dois pontos. A geometria urbana depende da malha viária, das restrições de circulação, da orientação das ruas, da conectividade e da métrica escolhida.
 
@@ -12,10 +12,10 @@ A ideia central é mostrar que, em uma cidade, “distância” não é apenas u
 
 - Seleção de origem e destino por clique em mapa Folium.
 - Cálculo da rota real como menor caminho em grafo OSM.
-- Comparação com \(L_1\), \(L_2\), \(L_\infty\) e \(L_p\).
+- Comparação com $L_1$, $L_2$, $L_\infty$ e $L_p$.
 - Painel de erros: erro absoluto, erro percentual e razão grafo/norma.
-- Visualização da bola \(L_p\) e de curvas auxiliares no plano projetado.
-- Calibração empírica de \(p\) por amostragem de pares de nós da rede.
+- Visualização da bola $L_p$ e de curvas auxiliares no plano projetado.
+- Calibração empírica de $p$ por amostragem de pares de nós da rede.
 - Execução com grafo baixado na hora ou com GraphML local.
 - Código modular, testável e preparado para evolução.
 
@@ -49,7 +49,7 @@ python scripts/build_graph.py \
 
 Depois disso, o app carregará `data/graph.graphml` automaticamente, salvo se você escolher outro caminho na barra lateral.
 
-## Calibração de \(p\) por linha de comando
+## Calibração de $p$ por linha de comando
 
 ```bash
 python scripts/calibrate_place.py \
@@ -59,7 +59,7 @@ python scripts/calibrate_place.py \
   --out data/calibration.csv
 ```
 
-Esse script estima, para vários valores de \(p\), quão bem \(\alpha\|x-y\|_p\) aproxima a distância real na rede. O fator \(\alpha\) é ajustado por mínimos quadrados.
+Esse script estima, para vários valores de $p$, quão bem $\alpha\|x-y\|_p$ aproxima a distância real na rede. O fator $\alpha$ é ajustado por mínimos quadrados.
 
 ## Estrutura
 
@@ -96,12 +96,12 @@ pytest
 
 ## Observação matemática importante
 
-A rota real é calculada sobre uma rede viária. As normas \(L_p\) são calculadas sobre coordenadas projetadas em metros. Portanto, a comparação é entre duas geometrias distintas:
+A rota real é calculada sobre uma rede viária. As normas $L_p$ são calculadas sobre coordenadas projetadas em metros. Portanto, a comparação é entre duas geometrias distintas:
 
-\[
+$$
 d_G(u,v)
 \quad\text{versus}\quad
 \|x_u-x_v\|_p.
-\]
+$$
 
 Essa diferença é exatamente o objeto de estudo do projeto.

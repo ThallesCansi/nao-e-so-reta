@@ -25,10 +25,10 @@ Arquivo: `src/nao_e_so_reta/norms.py`
 
 Contém:
 
-- norma \(L_p\);
-- distância \(L_p\);
-- casos especiais \(L_1\), \(L_2\), \(L_\infty\);
-- fronteira da bola \(L_p\);
+- norma $L_p$;
+- distância $L_p$;
+- casos especiais $L_1$, $L_2$, $L_\infty$;
+- fronteira da bola $L_p$;
 - polilinhas Manhattan;
 - curva visual didática.
 
@@ -39,9 +39,9 @@ Contém:
 - comparação entre métricas;
 - erro relativo;
 - tortuosidade;
-- ajuste de escala \(lpha\);
-- calibração de \(p\);
-- seleção de melhor \(p\).
+- ajuste de escala $\alpha$;
+- calibração de $p$;
+- seleção de melhor $p$.
 
 ### 3. Dados e grafo
 
@@ -83,7 +83,7 @@ Responsável por:
 - criar mapa base;
 - adicionar marcadores;
 - adicionar rota real;
-- adicionar camadas \(L_p\);
+- adicionar camadas $L_p$;
 - adicionar legenda.
 
 ## Decisões técnicas
@@ -102,7 +102,7 @@ O grafo é carregado com `st.cache_resource`, pois é um recurso pesado e compar
 
 ### CRS projetado
 
-As métricas \(L_p\) precisam ser calculadas em metros. Por isso, o grafo é projetado com OSMnx antes de calcular distâncias planas.
+As métricas $L_p$ precisam ser calculadas em metros. Por isso, o grafo é projetado com OSMnx antes de calcular distâncias planas.
 
 ### Testabilidade
 
