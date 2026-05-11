@@ -13,8 +13,4 @@ data/*.graphml
 data/*.gpkg
 data/*.csv
 !data/.gitkeep
-temp_codes_ruas/cache
-temp_codes_ruas/data
-temp_codes_ruas/figures
-temp_codes_ruas/results
 notebooks/cache
