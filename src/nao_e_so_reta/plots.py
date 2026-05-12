@@ -1,13 +1,14 @@
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any, Iterable
 import math
+from collections.abc import Iterable
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
 
-from .norms import distance_col, metric_latex, metric_label, p_value_label, tau_col, tau_latex
+from .norms import distance_col, metric_label, metric_latex, tau_col, tau_latex
 
 
 def _save(fig, filepath: str | Path | None, *, dpi: int = 250):

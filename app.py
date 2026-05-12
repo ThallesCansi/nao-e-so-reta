@@ -8,10 +8,10 @@ import streamlit as st
 from streamlit_folium import st_folium
 
 from nao_e_so_reta.analysis import (
-    compare_norms_for_pair,
-    tortuosity,
     calibration_curve,
+    compare_norms_for_pair,
     records_to_dicts,
+    tortuosity,
 )
 from nao_e_so_reta.config import AppConfig, LatLon
 from nao_e_so_reta.graph_io import load_graph_from_path_or_place
@@ -87,7 +87,7 @@ def render_metric_table(comparisons) -> None:
     df = pd.DataFrame(rows)
     st.dataframe(
         df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "Distância (m)": st.column_config.NumberColumn(format="%.1f"),
@@ -149,7 +149,7 @@ def render_calibration_panel(graph, projected_graph, cfg: AppConfig) -> None:
 
     p_values = [round(1.0 + 0.05 * i, 2) for i in range(0, 61)]  # 1.00 até 4.00
 
-    if st.button("Rodar calibração", use_container_width=True):
+    if st.button("Rodar calibração", width="stretch"):
         with st.spinner("Amostrando pares e calculando menores caminhos..."):
             pairs = build_calibration_pairs(
                 graph,
@@ -181,11 +181,11 @@ def render_calibration_panel(graph, projected_graph, cfg: AppConfig) -> None:
     )
 
     chart_df = df.set_index("p")[["MAPE_pct", "RMSE_m", "MAE_m"]]
-    st.line_chart(chart_df, use_container_width=True)
+    st.line_chart(chart_df, width="stretch")
 
     st.dataframe(
         df,
-        use_container_width=True,
+        width="stretch",
         hide_index=True,
         column_config={
             "p": st.column_config.NumberColumn(format="%.2f"),
@@ -202,7 +202,7 @@ def render_calibration_panel(graph, projected_graph, cfg: AppConfig) -> None:
         data=df.to_csv(index=False).encode("utf-8"),
         file_name="calibracao_metricas_urbanas.csv",
         mime="text/csv",
-        use_container_width=True,
+        width="stretch",
     )
 
 
@@ -233,7 +233,7 @@ def main() -> None:
         show_minkowski_curve = st.checkbox("Curva didática Lp", value=True)
 
         st.divider()
-        if st.button("Resetar origem/destino", use_container_width=True):
+        if st.button("Resetar origem/destino", width="stretch"):
             reset_markers()
             st.rerun()
 
@@ -249,7 +249,7 @@ def main() -> None:
                 options=["drive", "walk", "bike"],
                 index=["drive", "walk", "bike"].index(cfg.default_network_type),
             )
-            if st.button("Recarregar grafo", use_container_width=True):
+            if st.button("Recarregar grafo", width="stretch"):
                 cached_graph.clear()
                 reset_markers()
                 st.rerun()

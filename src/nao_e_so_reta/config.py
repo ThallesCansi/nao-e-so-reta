@@ -25,6 +25,25 @@ class AppConfig:
     network_type: NetworkType = "drive"
     make_undirected: bool = True
 
+    default_graph_path: str = "data/graph.graphml"
+    default_place_name: str = "Barão Geraldo, Campinas, São Paulo, Brazil"
+    default_network_type: NetworkType = "drive"
+
+    map_center: LatLon = (-22.8190, -47.0700)
+    map_zoom: int = 14
+
+    p_min: float = 1.0
+    p_max: float = 5.0
+    default_p: float = 2.0
+    p_step: float = 0.05
+
+    n_superellipse_points: int = 180
+    n_visual_curve_points: int = 90
+
+    calibration_default_samples: int = 100
+    calibration_max_samples: int = 1000
+    calibration_seed: int = 42
+
     barao_center: LatLon = (-22.8190, -47.0700)
     barao_dist_m: int = 6000
 

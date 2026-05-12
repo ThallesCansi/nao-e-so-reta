@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import Any
-import warnings
 
 import networkx as nx
 import osmnx as ox

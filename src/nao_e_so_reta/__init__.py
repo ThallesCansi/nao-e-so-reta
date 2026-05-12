@@ -1,109 +1,20 @@
-from .config import *
-from .norms import *
-from .routing import *
+"""API pública do projeto Não é só reta."""
+
+# ruff: noqa: E402,F403
+
+import os
+import tempfile
+from pathlib import Path
+
+_mpl_config_dir = Path(tempfile.gettempdir()) / "nao_e_so_reta_mpl"
+_mpl_config_dir.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLCONFIGDIR", str(_mpl_config_dir))
+
 from .analysis import *
+from .config import *
+from .graph_io import *
+from .norms import *
 from .plots import *
-
-# from nao_e_so_reta.graph_io import (
-#     configure_osmnx,
-#     download_graph,
-#     largest_connected_component,
-#     load_graph_from_path_or_place,
-#     load_graphml,
-#     load_or_download_graph,
-#     prepare_graph,
-#     project_graph,
-#     save_graphml,
-#     save_graphml_for_place,
-#     to_undirected,
-# )
-# from nao_e_so_reta.sampling import (
-#     build_calibration_pairs,
-#     largest_weakly_connected_nodes,
-#     sample_node_pairs,
-#     sample_vertex_pairs,
-# )
-# from nao_e_so_reta.visualization import (
-#     latex_label_from_metric_col,
-#     plot_error_by_p,
-#     plot_metric_scatter,
-#     plot_route,
-#     plot_tortuosity_hist,
-# )
-
-# __all__ = [
-#     "CalibrationRecord",
-#     "DEFAULT_P_VALUES",
-#     "MetricComparison",
-#     "SinglePairResult",
-#     "add_graph_distances_grouped",
-#     "add_lp_columns",
-#     "analysis",
-#     "best_calibration_record",
-#     "best_p_by",
-#     "build_calibration_pairs",
-#     "calibration_curve",
-#     "calibration_for_p",
-#     "compare_norms_for_pair",
-#     "config",
-#     "configure_osmnx",
-#     "compute_pair_metrics",
-#     "compute_single_pair_from_queries",
-#     "compute_single_pair_result",
-#     "download_graph",
-#     "evaluate_p_grid",
-#     "geocode_point",
-#     "graph_distance",
-#     "graph_io",
-#     "largest_connected_component",
-#     "largest_weakly_connected_nodes",
-#     "latex_label_from_metric_col",
-#     "load_graph_from_path_or_place",
-#     "load_graphml",
-#     "load_or_download_graph",
-#     "lp_distance_xy",
-#     "lp_norm",
-#     "manhattan_polyline_xy",
-#     "metric_column_from_p",
-#     "metric_name_from_p",
-#     "named_lp_distances",
-#     "nearest_node",
-#     "nearest_node_from_latlon",
-#     "nearest_node_from_query",
-#     "node_latlon",
-#     "node_xy",
-#     "norms",
-#     "optimal_scale_alpha",
-#     "p_grid",
-#     "pairwise_lp",
-#     "plot_error_by_p",
-#     "plot_metric_scatter",
-#     "plot_route",
-#     "plot_tortuosity_hist",
-#     "prepare_graph",
-#     "projections",
-#     "project_graph",
-#     "records_to_dicts",
-#     "routing",
-#     "route_length",
-#     "safe_ratio",
-#     "safe_relative_error_pct",
-#     "sample_node_pairs",
-#     "sample_vertex_pairs",
-#     "save_dataframe",
-#     "save_graphml",
-#     "save_graphml_for_place",
-#     "shortest_route",
-#     "shortest_route_between_points",
-#     "single_pair_to_dataframe",
-#     "summarize_metric_errors",
-#     "summarize_tortuosity",
-#     "superellipse_boundary_xy",
-#     "to_undirected",
-#     "tortuosity",
-#     "tortuosity_from_nodes",
-#     "validate_p",
-#     "sampling",
-#     "visualization",
-#     "visual_minkowski_curve_xy",
-# ]
+from .projections import *
+from .routing import *
+from .sampling import *

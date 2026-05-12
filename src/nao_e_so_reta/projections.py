@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pyproj
 
-from nao_e_so_reta.config import LatLon, XY
+from nao_e_so_reta.config import XY, LatLon
 
 
 def transformer_projected_to_wgs84(projected_crs: object) -> pyproj.Transformer:

@@ -10,7 +10,8 @@ import numpy as np
 import pandas as pd
 import pyproj
 
-from nao_e_so_reta.config import LatLon, XY
+from nao_e_so_reta.analysis import best_p_by
+from nao_e_so_reta.config import XY, LatLon
 from nao_e_so_reta.norms import (
     lp_distance_xy,
     manhattan_polyline_xy,
@@ -18,7 +19,6 @@ from nao_e_so_reta.norms import (
     superellipse_boundary_xy,
     visual_minkowski_curve_xy,
 )
-from nao_e_so_reta.analysis import best_p_by
 from nao_e_so_reta.projections import points_xy_to_latlon
 
 

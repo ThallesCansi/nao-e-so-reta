@@ -4,7 +4,12 @@ import math
 
 import pytest
 
-from nao_e_so_reta.norms import lp_distance_xy, lp_norm, manhattan_polyline_xy, superellipse_boundary_xy
+from nao_e_so_reta.norms import (
+    lp_distance_xy,
+    lp_norm,
+    manhattan_polyline_xy,
+    superellipse_boundary_xy,
+)
 
 
 def test_lp_norm_special_cases() -> None:

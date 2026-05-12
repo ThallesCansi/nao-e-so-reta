@@ -1,10 +1,14 @@
 from __future__ import annotations
 
+import math
+import warnings
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-import warnings
 
 import networkx as nx
+
+from .config import XY, LatLon
 
 try:
     import osmnx as ox
@@ -29,7 +33,25 @@ def _require_pyproj() -> None:
     if Transformer is None:
         raise ImportError("pyproj é necessário para transformar coordenadas.")
 
-from .config import LatLon, XY
+
+@dataclass(frozen=True)
+class RouteResult:
+    """Resultado do menor caminho entre dois pontos clicados/geográficos."""
+
+    origin_node: int
+    destination_node: int
+    origin_node_latlon: LatLon
+    destination_node_latlon: LatLon
+    origin_xy: XY
+    destination_xy: XY
+    route_nodes: list[int]
+    route_latlon: list[LatLon]
+    length_m: float | None
+    error: str | None = None
+
+    @property
+    def ok(self) -> bool:
+        return self.error is None and self.length_m is not None
 
 
 def _project_graph(graph: Any, to_crs=None) -> Any:
@@ -93,6 +115,7 @@ def prepare_graph(
             "keep_largest_component=True foi ignorado para grafo direcionado. "
             "Neste projeto, recomenda-se make_undirected=True.",
             RuntimeWarning,
+            stacklevel=2,
         )
     return graph
 
@@ -171,6 +194,7 @@ def geocode_point(query: str, fallback_latlon: LatLon | None = None) -> LatLon:
         warnings.warn(
             f"Falha ao geocodificar {query!r}. Usando fallback_latlon={fallback_latlon}.",
             RuntimeWarning,
+            stacklevel=2,
         )
         return fallback_latlon
 
@@ -187,6 +211,26 @@ def node_latlon_from_projected(graph: Any, node: int) -> LatLon:
     x, y = node_xy(graph, node)
     lon, lat = transformer.transform(x, y)
     return float(lat), float(lon)
+
+
+def node_latlon(graph: Any, node: int) -> LatLon:
+    """Coordenadas latitude/longitude de um nó em grafo não projetado."""
+    return float(graph.nodes[node]["y"]), float(graph.nodes[node]["x"])
+
+
+def nearest_node(graph: Any, point: LatLon) -> int:
+    """Retorna o nó mais próximo de uma coordenada lat/lon em grafo não projetado."""
+    _require_osmnx()
+    lat, lon = point
+    try:
+        return int(ox.distance.nearest_nodes(graph, X=lon, Y=lat))
+    except ImportError:
+        nearest = min(
+            graph.nodes,
+            key=lambda node: (float(graph.nodes[node]["x"]) - lon) ** 2
+            + (float(graph.nodes[node]["y"]) - lat) ** 2,
+        )
+        return int(nearest)
 
 
 def nearest_node_from_latlon(graph: Any, point: LatLon) -> int:
@@ -214,10 +258,17 @@ def shortest_route(graph: Any, origin_node: int, destination_node: int, *, weigh
     return list(nx.shortest_path(graph, source=origin_node, target=destination_node, weight=weight))
 
 
+def graph_distance(graph: Any, origin_node: int, destination_node: int, *, weight: str = "length") -> float:
+    """Distância do menor caminho ponderado entre dois nós."""
+    return float(
+        nx.shortest_path_length(graph, source=origin_node, target=destination_node, weight=weight)
+    )
+
+
 def route_length(graph: Any, route: list[int], *, weight: str = "length") -> float:
     """Comprimento de uma rota; trata arestas paralelas de MultiGraph."""
     total = 0.0
-    for u, v in zip(route[:-1], route[1:]):
+    for u, v in zip(route[:-1], route[1:], strict=False):
         data = graph.get_edge_data(u, v)
         if data is None:
             raise ValueError(f"Não há aresta entre {u} e {v}.")
@@ -226,3 +277,58 @@ def route_length(graph: Any, route: list[int], *, weight: str = "length") -> flo
         else:
             total += float(data.get(weight, 1.0))
     return float(total)
+
+
+def tortuosity_from_nodes(graph: Any, origin_node: int, destination_node: int) -> float:
+    """Tortuosidade d_G/d_2 entre dois nós de um grafo projetado."""
+    from .norms import lp_distance_xy
+
+    euclidean = lp_distance_xy(node_xy(graph, origin_node), node_xy(graph, destination_node), 2.0)
+    if euclidean <= 0:
+        return math.nan
+    return graph_distance(graph, origin_node, destination_node) / euclidean
+
+
+def shortest_route_between_points(
+    graph: Any,
+    projected_graph: Any,
+    origin: LatLon,
+    destination: LatLon,
+) -> RouteResult:
+    """Calcula menor caminho entre os nós mais próximos de origem/destino."""
+    origin_node = nearest_node(graph, origin)
+    destination_node = nearest_node(graph, destination)
+
+    origin_node_latlon = node_latlon(graph, origin_node)
+    destination_node_latlon = node_latlon(graph, destination_node)
+    origin_xy = node_xy(projected_graph, origin_node)
+    destination_xy = node_xy(projected_graph, destination_node)
+
+    try:
+        route_nodes = shortest_route(graph, origin_node, destination_node)
+        length_m = graph_distance(graph, origin_node, destination_node)
+    except nx.NetworkXNoPath:
+        return RouteResult(
+            origin_node=origin_node,
+            destination_node=destination_node,
+            origin_node_latlon=origin_node_latlon,
+            destination_node_latlon=destination_node_latlon,
+            origin_xy=origin_xy,
+            destination_xy=destination_xy,
+            route_nodes=[],
+            route_latlon=[],
+            length_m=None,
+            error="Não há caminho viável entre estes pontos no grafo selecionado.",
+        )
+
+    return RouteResult(
+        origin_node=origin_node,
+        destination_node=destination_node,
+        origin_node_latlon=origin_node_latlon,
+        destination_node_latlon=destination_node_latlon,
+        origin_xy=origin_xy,
+        destination_xy=destination_xy,
+        route_nodes=list(map(int, route_nodes)),
+        route_latlon=[node_latlon(graph, node) for node in route_nodes],
+        length_m=length_m,
+    )
