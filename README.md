@@ -34,7 +34,7 @@ pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Na primeira execução, caso `data/graph.graphml` não exista, o app baixa a malha viária do OpenStreetMap via OSMnx. Isso pode demorar.
+Na primeira execução, caso `data/graph.graphml` não exista, o app baixa a malha viária do OpenStreetMap via OSMnx. Isso pode levar um tempo.
 
 ## Gerando um grafo offline
 
